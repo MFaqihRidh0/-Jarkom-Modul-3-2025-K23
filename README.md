@@ -372,10 +372,10 @@ ping -c3 oropher.k23.com
 
 
 ### Nomor 5
-#A. Skrip untuk Erendis (MASTER – 10.75.3.3)
+A. Skrip untuk Erendis (MASTER – 10.75.3.3)
 
-#Jalankan di Erendis sebagai root. Ini menimpa file BIND terkait.
-
+Jalankan di Erendis sebagai root. Ini menimpa file BIND terkait.
+```
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -383,12 +383,16 @@ DOMAIN="k23.com"
 SERIAL="$(date +%Y%m%d%H)"
 MASTER_IP="10.75.3.3"
 SLAVE_IP="10.75.3.4"
+```
 
-# Direktori zona
+**Direktori zona**
+```
 mkdir -p /etc/bind/zones
 chown -R root:bind /etc/bind/zones
+```
 
-# named.conf.options (autoritatif-only, izinkan query dari mana pun)
+**named.conf.options (autoritatif-only, izinkan query dari mana pun)**
+```
 cat >/etc/bind/named.conf.options <<'EOF'
 options {
     directory "/var/cache/bind";
@@ -398,8 +402,10 @@ options {
     dnssec-validation no;
 };
 EOF
+```
 
-# named.conf.local (zona master + reverse)
+**named.conf.local (zona master + reverse)**
+```
 cat >/etc/bind/named.conf.local <<EOF
 zone "${DOMAIN}" {
     type master;
@@ -417,8 +423,10 @@ zone "10.75.10.in-addr.arpa" {
     notify yes;
 };
 EOF
+```
 
-# File zona forward (lengkap dengan CNAME & TXT)
+**File zona forward (lengkap dengan CNAME & TXT)**
+```
 cat >/etc/bind/zones/db.${DOMAIN} <<EOF
 \$TTL 604800
 @   IN  SOA ns1.${DOMAIN}. admin.${DOMAIN}. (
@@ -461,27 +469,35 @@ $TTL 604800
 3   IN  PTR erendis.k23.com.
 4   IN  PTR amdir.k23.com.
 EOF
+```
 
-# Validasi & muat
+**Validasi & muat**
+
+```
 named-checkconf
 named-checkzone "${DOMAIN}" /etc/bind/zones/db.${DOMAIN}
 named-checkzone 10.75.10.in-addr.arpa /etc/bind/zones/db.3.75.10.rev
+```
 
-# Start/Reload named (tanpa systemd)
+**Start/Reload named (tanpa systemd)**
+
+```
 pkill -f "named -u bind" 2>/dev/null || true
 sleep 1
 named -u bind -c /etc/bind/named.conf >/var/log/named.log 2>&1 &
 sleep 1
+```
 
-# Paksa notifikasi ke slave
+**Paksa notifikasi ke slave**
+```
 rndc reload ${DOMAIN} 2>/dev/null || true
 rndc reload 10.75.10.in-addr.arpa 2>/dev/null || true
 rndc notify ${DOMAIN} 2>/dev/null || true
 rndc notify 10.75.10.in-addr.arpa 2>/dev/null || true
-
+```
 echo "[MASTER] selesai. Cek: dig @${MASTER_IP} ${DOMAIN} SOA +noall +answer"
 
-#B. Skrip untuk Amdir (SLAVE – 10.75.3.4)
+B. Skrip untuk Amdir (SLAVE – 10.75.3.4)
 
 #Jalankan di Amdir sebagai root.
 
@@ -528,38 +544,45 @@ sleep 1
 named -u bind -c /etc/bind/named.conf >/var/log/named.log 2>&1 &
 sleep 1
 
-# Bersihkan cache file lama & tarik ulang
+**Bersihkan cache file lama & tarik ulang**
+```
 rm -f /var/cache/bind/db.${DOMAIN} /var/cache/bind/db.3.75.10.rev || true
 rndc retransfer ${DOMAIN} 2>/dev/null || true
 rndc retransfer 10.75.10.in-addr.arpa 2>/dev/null || true
 sleep 1
 
 echo "[SLAVE] selesai. Cek: ls -l /var/cache/bind/db.${DOMAIN}"
-
-#C. Perintah uji (jalankan dari klien mana pun, atau langsung di Erendis/Amdir)
-# Master vs slave serial harus sama
+```
+C. Perintah uji (jalankan dari klien mana pun, atau langsung di Erendis/Amdir)
+ 
+**Master vs slave serial harus sama**
+```
 dig @10.75.3.3 k23.com SOA +noall +answer
 dig @10.75.3.4 k23.com SOA +noall +answer
-
-# 1) Alias www (CNAME → apex)
+```
+1) Alias www (CNAME → apex)
+```
 dig @10.75.3.3 www.k23.com +noall +answer
 dig @10.75.3.4 www.k23.com +noall +answer
-
-# 2) TXT rahasia
+```
+3) TXT rahasia
+```
 dig @10.75.3.3 TXT elros.k23.com +noall +answer
 dig @10.75.3.4 TXT elros.k23.com +noall +answer
 dig @10.75.3.3 TXT pharazon.k23.com +noall +answer
 dig @10.75.3.4 TXT pharazon.k23.com +noall +answer
-
-# 3) Reverse PTR (SUNNAH
+```
+4) Reverse PTR
+   
 dig -x 10.75.3.3 @10.75.3.3 +noall +answer
 dig -x 10.75.3.4 @10.75.3.4 +noall +answer
 
 
 ### Nomor 6
+
 authoritative;
 
-# ===== Subnet 1: Keluarga Manusia (10.75.1.0/24) =====
+===== Subnet 1: Keluarga Manusia (10.75.1.0/24) =====
 subnet 10.75.1.0 netmask 255.255.255.0 {
   option routers           10.75.1.1;
   option subnet-mask       255.255.255.0;
@@ -571,7 +594,7 @@ subnet 10.75.1.0 netmask 255.255.255.0 {
   default-lease-time 1800;    # 30 menit
   max-lease-time     3600;    # 60 menit
 
-  # Pool dinamis Manusia + lease time spesifik (override subnet)
+  
   pool {
     range 10.75.1.6  10.75.1.34;
     default-lease-time 1800;  # 30 menit
@@ -584,18 +607,19 @@ subnet 10.75.1.0 netmask 255.255.255.0 {
   }
 }
 
-# ===== Subnet 2: Keluarga Peri (10.75.2.0/24) =====
+ ===== Subnet 2: Keluarga Peri (10.75.2.0/24) =====
 subnet 10.75.2.0 netmask 255.255.255.0 {
   option routers           10.75.2.1;
   option subnet-mask       255.255.255.0;
   option broadcast-address 10.75.2.255;
   option domain-name-servers 192.168.122.1;  # atau 10.75.5.2 jika ingin via Minastir
 
-  # Default untuk subnet Peri
+**  Default untuk subnet Peri**
+```
   default-lease-time 600;     # 10 menit
   max-lease-time     3600;    # 60 menit
 
-  # Pool dinamis Peri + lease time spesifik
+  
   pool {
     range 10.75.2.35 10.75.2.67;
     default-lease-time 600;   # 10 menit
@@ -608,8 +632,8 @@ subnet 10.75.2.0 netmask 255.255.255.0 {
   }
 }
 
-# ===== Subnet 3: Segmen Khamul (10.75.3.0/24) =====
-# Tidak ada pool dinamis; hanya opsi & reservasi Khamul
+ ===== Subnet 3: Segmen Khamul (10.75.3.0/24) =====
+Tidak ada pool dinamis; hanya opsi & reservasi Khamul
 subnet 10.75.3.0 netmask 255.255.255.0 {
   option routers           10.75.3.1;
   option subnet-mask       255.255.255.0;
@@ -617,12 +641,12 @@ subnet 10.75.3.0 netmask 255.255.255.0 {
   option domain-name-servers 192.168.122.1;  # atau 10.75.5.2
 }
 
-# Reservasi agar Khamul SELALU mendapat 10.75.3.95
+Reservasi agar Khamul SELALU mendapat 10.75.3.95
 host khamul {
   hardware ethernet AA:BB:CC:DD:EE:FF;   # GANTI dengan MAC eth0 Khamul
   fixed-address 10.75.3.95;
 }
 
-# ===== Subnet 4: Lokal Aldarion (10.75.4.0/24) =====
+ ===== Subnet 4: Lokal Aldarion (10.75.4.0/24) =====
 subnet 10.75.4.0 netmask 255.255.255.0 { }
-
+```
