@@ -201,14 +201,16 @@ deb http://security.debian.org/debian-security $CODENAME-security main contrib n
 EOF
 
 C) Install BIND9 (tanpa rekomendasi, biar ringan) — di Minastir
+
 ```
 apt-get update -o Acquire::ForceIPv4=true
 apt-get install -y --no-install-recommends bind9 bind9-utils dnsutils -o Acquire::ForceIPv4=true
 ```
 
-# Sekarang direktori /etc/bind seharusnya ada. Error “No such file or directory” di nano akan hilang.
+Sekarang direktori /etc/bind seharusnya ada. Error “No such file or directory” di nano akan hilang.
 
-# nano /etc/bind/named.conf.options
+nano /etc/bind/named.conf.options
+
 ```
 options {
     directory "/var/cache/bind";
