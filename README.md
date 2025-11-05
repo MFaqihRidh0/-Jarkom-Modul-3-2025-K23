@@ -561,8 +561,8 @@ echo "[MASTER] selesai. Cek: dig @${MASTER_IP} ${DOMAIN} SOA +noall +answer"
 
 B. Skrip untuk Amdir (SLAVE – 10.75.3.4)
 
-#Jalankan di Amdir sebagai root.
-
+Jalankan di Amdir sebagai root.
+```
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -605,8 +605,10 @@ pkill -f "named -u bind" 2>/dev/null || true
 sleep 1
 named -u bind -c /etc/bind/named.conf >/var/log/named.log 2>&1 &
 sleep 1
+```
 
 **Bersihkan cache file lama & tarik ulang**
+
 ```
 rm -f /var/cache/bind/db.${DOMAIN} /var/cache/bind/db.3.75.10.rev || true
 rndc retransfer ${DOMAIN} 2>/dev/null || true
