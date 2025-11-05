@@ -1,4 +1,4 @@
-# LAPRES Praktikum Komunikasi Data dan Jaringan Komputer Modul 2 - K-23
+# LAPRES Praktikum Komunikasi Data dan Jaringan Komputer Modul 3 - K-23
 
 ## Anggota
 1. M. Faqih Ridho - 5027241123
@@ -265,6 +265,9 @@ nano /etc/resolv.conf
 #pakai IP Minastir
 nameserver 10.75.5.2
 ```
+<img width="717" height="161" alt="hasil nomer 3 ping google com" src="https://github.com/user-attachments/assets/5eb2f491-076a-49b9-bfe6-56bf3d33a057" />
+
+
 4) Uji dari Minastir & klien
 **di Minastir**
 ```
@@ -277,6 +280,19 @@ dig +short example.com @10.75.5.2
 dig +short example.com
 ping google.com
 ```
+
+**Hasil dari Minastir**
+
+<img width="419" height="152" alt="nomer 3 hasil dari minastir" src="https://github.com/user-attachments/assets/7a3b58cd-d963-40d0-9d9d-978d988d3663" />
+
+**Klient lain**
+
+<img width="416" height="123" alt="nomer 3 hasil dari klient lain" src="https://github.com/user-attachments/assets/88a99a36-4f6a-4760-93d4-7672eaf46172" />
+
+<img width="717" height="161" alt="hasil nomer 3 ping google com" src="https://github.com/user-attachments/assets/a5399655-feea-450c-8868-04341880672a" />
+
+
+
 
 ### Nomor 4
 
@@ -359,14 +375,15 @@ apt-get install -y --no-install-recommends bind9 bind9-utils dnsutils
 definisi zona slave
 nano /etc/bind/named.conf.local
 
+Isi:
 
-#Isi:
-
+```
 zone "k23.com" {
     type slave;
     file "/var/cache/bind/db.k23.com";
     masters { 10.75.3.3; };  // Erendis (master)
 };
+```
 
 #3) Minastir (DNS forwarder semua klien)
 
@@ -374,21 +391,25 @@ Peran: resolver recursive; forward kueri untuk zona privat ke Erendis/Amdir
 
 Tambahkan forward-zone agar *.k23.com tidak dilempar ke Internet
 
-nano /etc/bind/named.conf.local
+masuk ke nano /etc/bind/named.conf.local lalu konfigurasikan zone
 
+```
 zone "k23.com" {
     type forward;
     forward only;
     forwarders { 10.75.3.3; 10.75.3.4; };  // ns1 & ns2 lokal
 };
+```
 
-# 5) Uji dari salah satu klien (mis. Elros)
-## pastikan dapat DNS Minastir dari DHCP
+### 5) Uji dari salah satu klien (mis. Elros)
+### pastikan dapat DNS Minastir dari DHCP
+```
 dhclient -r eth0 || true
 dhclient eth0
 cat /etc/resolv.conf      # harus: nameserver 10.75.5.2
+```
 
-## uji resolusi via Minastir
+### uji resolusi via Minastir
 ping -c3 palantir.k23.com
 ping -c3 elros.k23.com
 ping -c3 pharazon.k23.com
@@ -398,6 +419,17 @@ ping -c3 anarion.k23.com
 ping -c3 galadriel.k23.com
 ping -c3 celegorn.k23.com
 ping -c3 oropher.k23.com
+
+**Hasil Diliat dari Amdir**
+<img width="563" height="78" alt="nomer 4 amdir" src="https://github.com/user-attachments/assets/859c178b-a1e5-4ec2-bc87-091da96339ec" />
+
+**Hasil Diliat dari Erendis**
+
+<img width="500" height="194" alt="nomer 4 erendis" src="https://github.com/user-attachments/assets/8338993e-561e-4a9f-8e1f-0149f9748190" />
+
+**Hasil nomer 4 membuat DNS**
+
+<img width="467" height="460" alt="hasil nomer 4 ping DNS" src="https://github.com/user-attachments/assets/8b97fc71-4dd5-4ff5-b1e5-92eeebcd6732" />
 
 
 ### Nomor 5
@@ -601,81 +633,159 @@ dig @10.75.3.4 TXT elros.k23.com +noall +answer
 dig @10.75.3.3 TXT pharazon.k23.com +noall +answer
 dig @10.75.3.4 TXT pharazon.k23.com +noall +answer
 ```
-4) Reverse PTR
-   
-dig -x 10.75.3.3 @10.75.3.3 +noall +answer
-dig -x 10.75.3.4 @10.75.3.4 +noall +answer
+
+**Hasil dari nomer 5**
+
+<img width="947" height="398" alt="soal nomer 5 hasil" src="https://github.com/user-attachments/assets/3b16c6fc-cd35-4d45-a909-619eab2a6d59" />
 
 
 ### Nomor 6
 
+**Jalankan di ALdarion**
+
+1. Jalankan nano /etc/dhcp/dhcpd.conf lalu isi dengan konfigurasi sebagai berikut :
+
+```
 authoritative;
 
-===== Subnet 1: Keluarga Manusia (10.75.1.0/24) =====
+# ===== Subnet 1: Keluarga Manusia (10.75.1.0/24) =====
 subnet 10.75.1.0 netmask 255.255.255.0 {
-  option routers           10.75.1.1;
-  option subnet-mask       255.255.255.0;
-  option broadcast-address 10.75.1.255;
-  option domain-name-servers 10.75.5.2;   # DNS Minastir (ubah bila perlu)
-  option domain-name "k23.com";
+  option routers              10.75.1.1;
+  option subnet-mask          255.255.255.0;
+  option broadcast-address    10.75.1.255;
+  option domain-name-servers  10.75.5.2;   # DNS internal (Minastir)
+  option domain-name          "k23.com";
 
-  # Default untuk subnet Manusia (boleh tetap ada)
-  default-lease-time 1800;    # 30 menit
-  max-lease-time     3600;    # 60 menit
+  # fallback subnet
+  default-lease-time 1800;    # 30m
+  max-lease-time     3600;    # 60m
 
-  
   pool {
     range 10.75.1.6  10.75.1.34;
-    default-lease-time 1800;  # 30 menit
-    max-lease-time     3600;  # 60 menit
+    default-lease-time 1800;
+    max-lease-time     3600;
   }
   pool {
     range 10.75.1.68 10.75.1.94;
-    default-lease-time 1800;  # 30 menit
-    max-lease-time     3600;  # 60 menit
+    default-lease-time 1800;
+    max-lease-time     3600;
   }
 }
 
- ===== Subnet 2: Keluarga Peri (10.75.2.0/24) =====
+# ===== Subnet 2: Keluarga Peri (10.75.2.0/24) =====
 subnet 10.75.2.0 netmask 255.255.255.0 {
-  option routers           10.75.2.1;
-  option subnet-mask       255.255.255.0;
-  option broadcast-address 10.75.2.255;
-  option domain-name-servers 192.168.122.1;  # atau 10.75.5.2 jika ingin via Minastir
+  option routers              10.75.2.1;
+  option subnet-mask          255.255.255.0;
+  option broadcast-address    10.75.2.255;
+  option domain-name-servers  10.75.5.2;   # samakan ke DNS internal (boleh 192.168.122.1 kalau diminta soal)
+  default-lease-time 600;     # 10m
+  max-lease-time     3600;    # 60m
 
-**  Default untuk subnet Peri**
-```
-  default-lease-time 600;     # 10 menit
-  max-lease-time     3600;    # 60 menit
-
-  
   pool {
     range 10.75.2.35 10.75.2.67;
-    default-lease-time 600;   # 10 menit
-    max-lease-time     3600;  # 60 menit
+    default-lease-time 600;
+    max-lease-time     3600;
   }
   pool {
     range 10.75.2.96 10.75.2.121;
-    default-lease-time 600;   # 10 menit
-    max-lease-time     3600;  # 60 menit
+    default-lease-time 600;
+    max-lease-time     3600;
   }
 }
 
- ===== Subnet 3: Segmen Khamul (10.75.3.0/24) =====
-Tidak ada pool dinamis; hanya opsi & reservasi Khamul
+# ===== Subnet 3: Segmen Khamul (10.75.3.0/24) =====
 subnet 10.75.3.0 netmask 255.255.255.0 {
-  option routers           10.75.3.1;
-  option subnet-mask       255.255.255.0;
-  option broadcast-address 10.75.3.255;
-  option domain-name-servers 192.168.122.1;  # atau 10.75.5.2
+  option routers              10.75.3.1;
+  option subnet-mask          255.255.255.0;
+  option broadcast-address    10.75.3.255;
+  option domain-name-servers  10.75.5.2;
 }
 
-Reservasi agar Khamul SELALU mendapat 10.75.3.95
+# Reservasi Khamul (ganti MAC!)
 host khamul {
-  hardware ethernet AA:BB:CC:DD:EE:FF;   # GANTI dengan MAC eth0 Khamul
+  hardware ethernet AA:BB:CC:DD:EE:FF;   # ganti dgn MAC eth0 Khamul (ip -br link show)
   fixed-address 10.75.3.95;
 }
 
- ===== Subnet 4: Lokal Aldarion (10.75.4.0/24) =====
+# ===== Subnet 4: Lokal Aldarion (10.75.4.0/24) =====
 subnet 10.75.4.0 netmask 255.255.255.0 { }
 ```
+
+2. “Bersihkan” state di server (Aldarion)
+stop dulu
+```
+systemctl stop isc-dhcp-server 2>/dev/null || service isc-dhcp-server stop
+```
+
+backup & kosongkan database lease
+
+```
+cp -a /var/lib/dhcp/dhcpd.leases /var/lib/dhcp/dhcpd.leases.bak 2>/dev/null || true
+: > /var/lib/dhcp/dhcpd.leases
+```
+
+pastikan config OK
+```
+dhcpd -t -cf /etc/dhcp/dhcpd.conf
+```
+
+start lagi
+
+```
+systemctl start isc-dhcp-server 2>/dev/null || service isc-dhcp-server start
+```
+
+**Test di klient keluarga manusia**
+
+```
+ip addr flush dev eth0
+rm -f /var/lib/dhcp/dhclient*.leases
+
+dhclient -r eth0 || true
+dhclient -v -lf /var/lib/dhcp/dhclient.eth0.leases -pf /run/dhclient.eth0.pid eth0
+
+# cek lease time dari file (bukan dari "renewal in ...")
+grep -m1 -Eo 'option dhcp-lease-time[ ]+[0-9]+' /var/lib/dhcp/dhclient.eth0.leases \
+| awk '{print "Lease seconds:", $3}'
+```
+
+**Test di klient keluarga peri**
+
+1) Siapkan klien DHCP (kalau belum ada)
+
+```
+apt-get update && apt-get install -y isc-dhcp-client
+```
+
+2) Bersihkan jejak lama
+```
+ip addr flush dev eth0
+rm -f /var/lib/dhcp/dhclient*.leases
+```
+
+3) Minta lease baru
+```
+dhclient -r eth0 || true
+dhclient -v -lf /var/lib/dhcp/dhclient.eth0.leases -pf /run/dhclient.eth0.pid eth0
+```
+
+4) Verifikasi IP harus di subnet & pool Manusia
+```
+ip -4 -o addr show dev eth0 | awk '{print "IP:",$4}'
+```
+
+5) Baca durasi lease dari file (bukan "renewal in ...")
+```
+grep -m1 -Eo 'option dhcp-lease-time[ ]+[0-9]+' /var/lib/dhcp/dhclient.eth0.leases \
+| awk '{print "Lease seconds:", $3}'
+```
+
+**Hasil dari klient keluarga manusia**
+
+<img width="638" height="325" alt="hasil nomer 6 finalll" src="https://github.com/user-attachments/assets/59070451-39dc-49dc-84cd-6de4e9ff6ca5" />
+
+**Hasil dari klient keluarga peri**
+
+<img width="817" height="449" alt="hasil nomer 6 untuk manusia" src="https://github.com/user-attachments/assets/15f3ab58-7eaa-4ab9-91e6-328321baf08d" />
+
+
