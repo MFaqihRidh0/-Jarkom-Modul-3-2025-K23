@@ -421,6 +421,7 @@ ping -c3 celegorn.k23.com
 ping -c3 oropher.k23.com
 
 **Hasil Diliat dari Amdir**
+
 <img width="563" height="78" alt="nomer 4 amdir" src="https://github.com/user-attachments/assets/859c178b-a1e5-4ec2-bc87-091da96339ec" />
 
 **Hasil Diliat dari Erendis**
