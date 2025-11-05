@@ -8,7 +8,7 @@
 ## Pengerjaan
 
 ### Nomor 1
-konfigruasi client CONTOH
+konfigruasi client IP static (sesuaikan IP address)
 ```
 auto eth0
 iface eth0 inet static
@@ -16,6 +16,15 @@ iface eth0 inet static
 	netmask 255.255.255.0
 	gateway 10.75.2.1
         up echo "nameserver 192.168.122.1" > /etc/resolv.conf
+```
+
+Konfigurasi klient IP dinamis 
+
+```
+auto eth0
+iface eth0 inet dhcp
+
+up echo nameserver 19.2.168.122.1 > /etc/resolv.conf
 ```
 
 konfogurasi Durin
@@ -49,6 +58,12 @@ iface eth5 inet static
 	address 10.75.5.1
 	netmask 255.255.255.0
 ```
+
+<img width="712" height="137" alt="image" src="https://github.com/user-attachments/assets/51856107-74c7-44bb-94d7-44ceac02a85f" />
+
+<img width="689" height="140" alt="image" src="https://github.com/user-attachments/assets/9d0ff831-add1-47a4-b83f-b09fb72157b1" />
+
+
 
 ### Nomor 2
 
@@ -134,19 +149,31 @@ dhcpd -4 -t -cf /etc/dhcp/dhcpd.conf
 service isc-dhcp-server restart
 service isc-dhcp-server status
 ```
-konfigurasi DHCP relay 
+konfigurasi DHCP relay (Durin)
 ```
 apt-get update
 apt-get install isc-dhcp-relay -y
 service isc-dhcp-relay start
 ```
 
-nano /etc/default/isc-dhcp-relay
+lalu buka nano /etc/default/isc-dhcp-relay (Durin)
+
 ```
 SERVERS="10.75.4.2"
 INTERFACES="eth1 eth2 eth3 eth4 eth5"   # semua interface LAN Durin
 OPTIONS=""
 ```
+
+**Gilgalad**
+
+<img width="827" height="317" alt="image" src="https://github.com/user-attachments/assets/c97249e6-0f08-417d-8016-8c4ad89bcb0e" />
+
+**Amandil**
+
+<img width="668" height="450" alt="soal 2 amandil" src="https://github.com/user-attachments/assets/9e5a3568-d550-425f-ac78-ff4daeaf2135" />
+
+
+
 
 ### Nomor 3
 
